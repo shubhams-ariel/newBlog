@@ -5,7 +5,7 @@ import User from "../models/User";
 import multer from "multer";
 import path from "path";
 import nodemailer from "nodemailer";
-
+import { AuthRequest } from "../middleware/auth";
 
 const generateTokens = (user: any) => {
   const accessToken = jwt.sign(
@@ -50,7 +50,7 @@ export const signup = async (req: Request, res: Response) => {
     });
 
     res.json({
-      accessToken,
+     // accessToken,
       role: newUser.role,
       user: {
         id: newUser._id,
@@ -113,20 +113,23 @@ export const refreshToken = async (req: Request, res: Response) => {
     const token = req.cookies.refreshToken;
     if (!token) return res.status(401).json({ msg: "No refresh token" });
 
-    jwt.verify(token, process.env.REFRESH_SECRET!, (err: any, decoded: any) => {
+    jwt.verify(token, process.env.REFRESH_SECRET!, async (err: any, decoded: any) => {
       if (err) return res.status(403).json({ msg: "Invalid refresh token" });
 
+      const user = await User.findById(decoded.id);
+      if (!user) return res.status(404).json({ msg: "User not found" });
+
       const accessToken = jwt.sign(
-        { id: decoded.id },
+        { id: user._id, role: user.role, username: user.username },
         process.env.JWT_SECRET!,
         { expiresIn: process.env.ACCESS_TOKEN_EXPIRE || "15m" }
       );
 
       res.cookie("accessToken", accessToken, {
         httpOnly: true,
-        secure: false, 
+        secure: false,
         sameSite: "strict",
-        maxAge: 15 * 60 * 1000, 
+        maxAge: 15 * 60 * 1000,
       });
 
       res.json({ msg: "Access token refreshed" });
@@ -210,4 +213,10 @@ export const resetPassword = async (req: Request, res: Response) => {
     console.error("Reset Password Error:", err);
     res.status(400).json({ msg: "Invalid or expired token" });
   }
+};
+
+
+export const getMe = async (req: AuthRequest, res: Response) => {
+  if (!req.user) return res.status(401).json({ msg: "Not authenticated" });
+  res.json({ user: req.user,role:req.user.role });
 };

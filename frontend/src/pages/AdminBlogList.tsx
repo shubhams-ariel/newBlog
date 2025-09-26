@@ -1,38 +1,13 @@
-import React, { useEffect, useState } from "react";
-import blogAPI from "../services/blogApi";
-import { toast } from "react-toastify";
+import React, { useEffect } from "react";
+import { useAdmin } from "../context/AdminContext";
 import { Link } from "react-router-dom";
 
 const AdminBlogList: React.FC = () => {
-  const [blogs, setBlogs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { blogs, loading, fetchBlogs, deleteBlog } = useAdmin();
 
   useEffect(() => {
-    const fetchBlogs = async () => {
-      try {
-        const res = await blogAPI.getAll(); 
-        setBlogs(res.data);
-      } catch (err) {
-        console.error(err);
-        toast.error("Failed to load blogs");
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchBlogs();
   }, []);
-
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Delete this blog?")) return;
-    try {
-      await blogAPI.delete(id);
-      setBlogs((prev) => prev.filter((b) => b._id !== id));
-      toast.success("Blog deleted");
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to delete blog");
-    }
-  };
 
   if (loading) return <p className="text-center mt-20">Loading blogs...</p>;
 
@@ -60,7 +35,7 @@ const AdminBlogList: React.FC = () => {
                   Edit
                 </Link>
                 <button
-                  onClick={() => handleDelete(blog._id)}
+                  onClick={() => deleteBlog(blog._id)}
                   className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
                 >
                   Delete

@@ -73,7 +73,7 @@ const Login: React.FC = () => {
           {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
         </div>
 
-        <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition">
+        <button type="submit" className="w-full bg-red-400 text-white py-2 rounded-lg hover:bg-blue-600 transition">
           Login
         </button>
 

@@ -4,34 +4,37 @@ import { EditorState, RichUtils, convertToRaw, ContentState } from "draft-js";
 import { Editor } from "draft-js";
 import draftToHtml from "draftjs-to-html";
 import htmlToDraft from "html-to-draftjs";
-import blogAPI from "../services/blogApi";
+import { useBlog } from "../context/BlogContext";
 import { toast } from "react-toastify";
+import blogAPI from "../services/blogApi";
 import "draft-js/dist/Draft.css";
 
 const BlogForm: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { updateBlog, createBlog } = useBlog();
   const isEdit = Boolean(id);
 
   const [title, setTitle] = useState("");
   const [editorState, setEditorState] = useState(EditorState.createEmpty());
   const [tags, setTags] = useState("");
-  const [image, setImage] = useState(""); 
+  const [image, setImage] = useState("");
 
- const toolbarButtons = [
-  { label: "B", action: () => toggleInlineStyle("BOLD") },
-  { label: "I", action: () => toggleInlineStyle("ITALIC") },
-  { label: "U", action: () => toggleInlineStyle("UNDERLINE") },
-  { label: "UL", action: () => toggleBlockType("unordered-list-item") },
-  { label: "OL", action: () => toggleBlockType("ordered-list-item") },
-  { label: "Link", action: () => promptForLink() },
-];
+  const toolbarButtons = [
+    { label: "B", action: () => toggleInlineStyle("BOLD") },
+    { label: "I", action: () => toggleInlineStyle("ITALIC") },
+    { label: "U", action: () => toggleInlineStyle("UNDERLINE") },
+    { label: "UL", action: () => toggleBlockType("unordered-list-item") },
+    { label: "OL", action: () => toggleBlockType("ordered-list-item") },
+    { label: "Link", action: () => promptForLink() },
+  ];
+
   useEffect(() => {
     if (isEdit) {
       blogAPI.getById(id!).then((res) => {
         setTitle(res.data.title || "");
         setTags(res.data.tags?.join(", ") || "");
-        setImage(res.data.image || ""); 
+        setImage(res.data.image || "");
         if (res.data.content) {
           const blocksFromHtml = htmlToDraft(res.data.content);
           const contentState = ContentState.createFromBlockArray(
@@ -43,7 +46,6 @@ const BlogForm: React.FC = () => {
     }
   }, [id, isEdit]);
 
-  
   const toggleInlineStyle = (style: string) => {
     setEditorState(RichUtils.toggleInlineStyle(editorState, style));
   };
@@ -69,20 +71,23 @@ const BlogForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const contentHtml = draftToHtml(convertToRaw(editorState.getCurrentContent()));
+    const blogData = {
+      title,
+      content: contentHtml,
+      tags: tags.split(",").map((t) => t.trim()).filter((t) => t),
+      image,
+    };
+
     try {
       if (isEdit) {
-        await blogAPI.update(id!, {
-          title,
-          content: contentHtml,
-          tags: tags.split(",").map((t) => t.trim()),
-          image, 
-        });
+        await updateBlog(id!, blogData);
         toast.success("Blog updated successfully!");
+        navigate(`/blogs/${id}`); // Navigate to BlogDetail
       } else {
-        await blogAPI.create({ title, content: contentHtml, tags: tags.split(",").map((t) => t.trim()), image });
+        await createBlog(blogData);
         toast.success("Blog created successfully!");
+        navigate("/blogs");
       }
-      navigate("/blogs");
     } catch (err) {
       console.error(err);
       toast.error("Something went wrong!");
@@ -93,19 +98,18 @@ const BlogForm: React.FC = () => {
     <div className="max-w-3xl mx-auto mt-10">
       <h2 className="text-2xl font-bold mb-4">{isEdit ? "Edit Blog" : "Create Blog"}</h2>
 
-     
-        <div className="flex gap-2 mb-3">
-  {toolbarButtons.map((btn, id) => (
-    <button
-      key={id}
-      type="button"
-      onClick={btn.action}
-      className="px-2 py-1 border rounded hover:bg-blue-200"
-    >
-      {btn.label}
-    </button>
-  ))}
-</div>
+      <div className="flex gap-2 mb-3">
+        {toolbarButtons.map((btn, id) => (
+          <button
+            key={id}
+            type="button"
+            onClick={btn.action}
+            className="px-2 py-1 border rounded hover:bg-blue-200"
+          >
+            {btn.label}
+          </button>
+        ))}
+      </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <input
@@ -129,14 +133,14 @@ const BlogForm: React.FC = () => {
           type="text"
           value={tags}
           onChange={(e) => setTags(e.target.value)}
-          placeholder="Tags..."
+          placeholder="Tags (comma-separated)"
           className="border p-2 rounded"
         />
 
         <input
           type="text"
           name="image"
-          placeholder="Paste image URl"
+          placeholder="Paste image URL"
           value={image}
           onChange={(e) => setImage(e.target.value)}
           className="w-full px-4 py-2 border rounded-lg"

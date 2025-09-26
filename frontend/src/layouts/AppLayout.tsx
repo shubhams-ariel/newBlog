@@ -25,6 +25,7 @@ import PrivateLayout from "./PrivateLayout";
 import { AuthProvider } from "../context/AuthContext";
 import { BlogProvider } from "../context/BlogContext";
 import { TodoProvider } from "../context/TodoContext";
+import { AdminProvider } from "../context/AdminContext"; // ✅ new import
 
 const AppLayout: React.FC = () => {
   return (
@@ -149,16 +150,16 @@ const AppLayout: React.FC = () => {
           }
         />
 
-        
+        {/* Admin Routes */}
         <Route 
           path="/admin"
           element={
             <AdminRoute>
-              <TodoProvider >
+              <AdminProvider>
                 <PrivateLayout>
                   <AdminDashboard />
                 </PrivateLayout>
-              </TodoProvider>
+              </AdminProvider>
             </AdminRoute>
           }
         />
@@ -166,9 +167,11 @@ const AppLayout: React.FC = () => {
           path="/admin/blogs"
           element={
             <AdminRoute>
-              <PrivateLayout>
-                <AdminBlogList />
-              </PrivateLayout>
+              <AdminProvider>
+                <PrivateLayout>
+                  <AdminBlogList />
+                </PrivateLayout>
+              </AdminProvider>
             </AdminRoute>
           }
         />

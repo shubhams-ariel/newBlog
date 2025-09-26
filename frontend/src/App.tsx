@@ -6,13 +6,11 @@ import AppLayout from "./layouts/AppLayout";
 
 const App: React.FC = () => {
   return (
-   
     
       <BrowserRouter>
         <AppLayout />
       </BrowserRouter>
-    
-   
+  
   );
 };
 

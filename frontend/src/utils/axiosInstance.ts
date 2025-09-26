@@ -1,31 +1,21 @@
-
 import axios, { type AxiosInstance } from "axios";
+import { jwtDecode } from "jwt-decode";
 
 export const createAPI = (path: string): AxiosInstance => {
   const instance = axios.create({
-    baseURL: `${import.meta.env.VITE_FRONTEND_URI}/${path}`,
+    baseURL: `${import.meta.env.VITE_FRONTEND_URI}/${path}`, 
     withCredentials: true,
   });
 
- 
-  instance.interceptors.request.use((config) => {
+  instance.interceptors.request.use(async (config) => {
     const token = localStorage.getItem("accessToken");
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  });
 
- 
-  instance.interceptors.response.use(
-    (res) => res,
-    async (err) => {
-      const originalRequest = err.config;
+    if (token) {
+      try {
+        const decoded: { exp: number } = jwtDecode(token);
+        const currentTime = Date.now() / 1000;
 
-      if (err.response?.status === 401 && !originalRequest._retry) {
-        originalRequest._retry = true;
-
-        try {
+        if (decoded.exp - currentTime < 10) {
           const refreshRes = await axios.post(
             `${import.meta.env.VITE_FRONTEND_URI}/auth/refresh`,
             {},
@@ -35,21 +25,19 @@ export const createAPI = (path: string): AxiosInstance => {
           const newAccessToken = refreshRes.data.accessToken;
           localStorage.setItem("accessToken", newAccessToken);
 
-          if (originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          }
-
-          return instance(originalRequest);
-        } catch (refreshErr) {
-          localStorage.clear();
-          window.location.href = "/login";
-          return Promise.reject(refreshErr);
+          if (config.headers) config.headers.Authorization = `Bearer ${newAccessToken}`;
+        } else {
+          if (config.headers) config.headers.Authorization = `Bearer ${token}`;
         }
+      } catch (err) {
+        console.error("Token error:", err);
+        localStorage.clear();
+        window.location.href = "/login";
       }
-
-      return Promise.reject(err);
     }
-  );
+
+    return config;
+  });
 
   return instance;
 };

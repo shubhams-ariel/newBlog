@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useBlog, type Blog } from "../context/BlogContext";
-import { toast } from "react-toastify";
 
 const BlogDetail: React.FC = () => {
   const { id } = useParams();
@@ -9,36 +8,30 @@ const BlogDetail: React.FC = () => {
   const currentUserId = localStorage.getItem("userId");
   const currentUserRole = localStorage.getItem("role");
 
-  const {
-    blogs,
-    likeBlog,
-    addComment,
-    deleteComment,
-    deleteBlog,
-  } = useBlog();
-
+  const { blogs, likeBlog, addComment, deleteComment, deleteBlog } = useBlog();
   const [newComment, setNewComment] = useState("");
-  const [blog, setBlog] = useState<Blog | null>(null);
 
-  useEffect(() => {
-    if (id) {
-      const b = blogs.find((b) => b._id === id);
-      setBlog(b || null);
-    }
-  }, [id, blogs]);
+  const blog: Blog | undefined = blogs.find((b) => b._id === id);
+  console.log("Current Blog:", blog); 
 
   if (!blog) return <p className="text-center mt-20 text-gray-500">Blog not found</p>;
 
   const likedByUser = blog.likes?.includes(currentUserId);
+  const canEditOrDelete = currentUserId === blog.author.id || currentUserRole === "admin";
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim() || !id) return;
+
     await addComment(id, newComment);
     setNewComment("");
   };
 
-  const canEditOrDelete = currentUserId === blog.author.id || currentUserRole === "admin";
+  const handleDeleteBlog = async () => {
+    if (!id) return;
+    await deleteBlog(id);
+    navigate("/blogs");
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-10">
@@ -55,7 +48,7 @@ const BlogDetail: React.FC = () => {
               Edit
             </Link>
             <button
-              onClick={() => { deleteBlog(blog._id); navigate("/blogs"); }}
+              onClick={handleDeleteBlog}
               className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
             >
               Delete
@@ -87,7 +80,9 @@ const BlogDetail: React.FC = () => {
         <button
           onClick={() => likeBlog(blog._id)}
           className={`px-3 py-1 rounded transition ${
-            likedByUser ? "bg-red-400 text-white rounded-2xl" : "bg-gray-200 text-gray-700 rounded-2xl"
+            likedByUser
+              ? "bg-red-400 text-white rounded-2xl"
+              : "bg-gray-200 text-gray-700 rounded-2xl"
           }`}
         >
           {likedByUser ? "❤️ Liked" : "🤍 Like"} ({blog.likes?.length || 0})

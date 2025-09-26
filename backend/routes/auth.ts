@@ -4,8 +4,8 @@ import {
   login,
   upload,
   uploadProfilePic,
-  refreshToken,   
- 
+  refreshToken,
+  getMe
 } from "../controllers/authControllers";
 import { forgotPassword, resetPassword } from "../controllers/authControllers";
 import { authMiddleware } from "../middleware/auth";
@@ -19,6 +19,9 @@ router.post("/refresh", refreshToken);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 
+
+router.get("/me", authMiddleware, getMe); 
+
 router.post(
   "/upload-profile",
   authMiddleware,
@@ -27,4 +30,3 @@ router.post(
 );
 
 export default router;
-

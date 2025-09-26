@@ -1,12 +1,12 @@
-
 import { Request, Response } from "express";
 import Todo from "../models/Todo";
 
-
+// CREATE TODO
 export const createTodo = async (req: Request, res: Response) => {
   try {
     const todo = new Todo({
       text: req.body.text,
+      status: req.body.status || "todo", // <-- added status with default
       user: req.user.id,
     });
     await todo.save();
@@ -16,7 +16,7 @@ export const createTodo = async (req: Request, res: Response) => {
   }
 };
 
-
+// GET TODOS
 export const getTodos = async (req: Request, res: Response) => {
   try {
     const todos = await Todo.find({ user: req.user.id });
@@ -26,13 +26,19 @@ export const getTodos = async (req: Request, res: Response) => {
   }
 };
 
+// UPDATE TODO
 export const updateTodo = async (req: Request, res: Response) => {
   try {
+    const updateData: any = {};
+    if (req.body.text !== undefined) updateData.text = req.body.text;
+    if (req.body.status !== undefined) updateData.status = req.body.status; // <-- allow status update
+
     const todo = await Todo.findOneAndUpdate(
       { _id: req.params.id, user: req.user.id },
-      { text: req.body.text },
+      updateData,
       { new: true }
     );
+
     if (!todo) return res.status(404).json({ msg: "Todo not found" });
     res.json(todo);
   } catch (err) {
@@ -40,7 +46,7 @@ export const updateTodo = async (req: Request, res: Response) => {
   }
 };
 
-
+// DELETE TODO
 export const deleteTodo = async (req: Request, res: Response) => {
   try {
     const todo = await Todo.findOneAndDelete({

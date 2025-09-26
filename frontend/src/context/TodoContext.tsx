@@ -1,17 +1,12 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect,  type ReactNode } from "react";
 import todoAPI from "../services/todoApi";
-import adminAPI from "../services/adminApi"; // For admin fetch
+import adminAPI from "../services/adminApi"; 
 import type { Todo } from "../interfaces/Todo";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import type { TodoContextType } from "../interfaces/Todo";
 
-interface TodoContextType {
-  todos: Todo[];
-  addTodo: (text: string) => void;
-  updateTodo: (id: string, text: string) => void;
-  deleteTodo: (id: string) => void;
-  loading: boolean;
-}
+
 
 const TodoContext = createContext<TodoContextType | undefined>(undefined);
 
@@ -57,15 +52,16 @@ export const TodoProvider: React.FC<Props> = ({ children, isAdmin = false }) => 
     }
   };
 
-  const updateTodo = async (id: string, text: string) => {
-    try {
-      const res = await todoAPI.put<Todo>(`/${id}`, { text });
-      setTodos((prev) => prev.map((todo) => (todo._id === id ? res.data : todo)));
-      toast.success("Todo updated successfully!");
-    } catch {
-      toast.error("Failed to update todo");
-    }
-  };
+  const updateTodo = async (id: string, data: { text?: string; status?: Todo["status"] }) => {
+  try {
+    const res = await todoAPI.put<Todo>(`/${id}`, data);
+    setTodos((prev) => prev.map((todo) => (todo._id === id ? res.data : todo)));
+    toast.success("Todo updated successfully!");
+  } catch {
+    toast.error("Failed to update todo");
+  }
+};
+
 
   const deleteTodo = async (id: string) => {
     try {

@@ -1,19 +1,18 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 interface Props {
-  children: React.ReactNode;
+  children: JSX.Element;
 }
 
 const ProtectedRoute: React.FC<Props> = ({ children }) => {
-  const token = localStorage.getItem("accessToken"); 
-  console.log("ProtectedRoute token:", token);
+  const { user, loading } = useAuth();
 
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <Navigate to="/login" replace />;
 
-  return <>{children}</>;
+  return children;
 };
 
 export default ProtectedRoute;

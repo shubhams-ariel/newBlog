@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import React, { createContext, useContext, useState,  type ReactNode, useEffect } from "react";
 import blogAPI from "../services/blogApi";
 import { toast } from "react-toastify";
 
@@ -39,7 +39,7 @@ export const BlogProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const currentUserId = localStorage.getItem("userId");
 
-  /** Fetch all blogs */
+ 
   const fetchBlogs = async () => {
     try {
       const res = await blogAPI.getAll();
@@ -50,7 +50,7 @@ export const BlogProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  /** Create blog */
+ 
   const createBlog = async (data: Partial<Blog>) => {
     try {
       await blogAPI.create(data);
@@ -62,20 +62,23 @@ export const BlogProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  /** Update blog */
+
   const updateBlog = async (id: string, data: Partial<Blog>) => {
     try {
-      await blogAPI.update(id, data);
+      const res = await blogAPI.update(id, data); 
+      console.log("API Response:", res.data); 
+      setBlogs((prev) =>
+        prev.map((b) => (b._id === id ? { ...b, ...res.data } : b))
+      );
       toast.success("Blog updated successfully");
-      await fetchBlogs();
     } catch (err) {
       console.error(err);
       toast.error("Failed to update blog");
     }
   };
 
-  /** Delete blog */
-  const deleteBlog = async (id: string) => {
+  
+    const deleteBlog = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this blog?")) return;
     try {
       await blogAPI.delete(id);
@@ -87,7 +90,7 @@ export const BlogProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  /** Like blog */
+ 
   const likeBlog = async (id: string) => {
     try {
       const res = await blogAPI.like(id);
@@ -111,12 +114,17 @@ export const BlogProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  /** Add comment */
+
   const addComment = async (blogId: string, text: string) => {
     try {
-      const res = await blogAPI.addComment(blogId, text);
+      const res = await blogAPI.addComment(blogId, text); 
+      console.log("Add Comment API Response:", res.data);
       setBlogs((prev) =>
-        prev.map((b) => (b._id === blogId ? { ...b, comments: [...(b.comments || []), res.data] } : b))
+        prev.map((b) =>
+          b._id === blogId
+            ? { ...b, comments: res.data.comments }
+            : b
+        )
       );
       toast.success("Comment added");
     } catch (err) {
@@ -125,7 +133,7 @@ export const BlogProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  /** Delete comment */
+ 
   const deleteComment = async (blogId: string, commentId: string) => {
     try {
       await blogAPI.deleteComment(blogId, commentId);
@@ -156,7 +164,6 @@ export const BlogProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   );
 };
 
-/** Hook to use Blog context */
 export const useBlog = (): BlogContextType => {
   const context = useContext(BlogContext);
   if (!context) throw new Error("useBlog must be used within BlogProvider");

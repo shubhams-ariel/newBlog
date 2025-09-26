@@ -52,7 +52,7 @@ const Signup: React.FC = () => {
           {errors.confirmPassword && <p className="text-red-500 text-sm">{errors.confirmPassword.message}</p>}
         </div>
 
-        <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition">Signup</button>
+        <button type="submit" className="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-500 transition">Signup</button>
 
         <p className="mt-4 text-center">Already have an account? <a href="/login" className="text-blue-400 underline">login</a>.</p>
       </form>

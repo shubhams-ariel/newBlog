@@ -1,35 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
-import { getDecryptedCookie } from "../utils/cookieUtils";
+import { useAuth } from "../context/AuthContext";
 
 const Dashboard: React.FC = () => {
-  const username = localStorage.getItem("username") || "User";
-  const [userRole, setUserRole] = useState("user");
+  const { user, role } = useAuth();
 
-  useEffect(() => {
-    
-    const roleFromCookie = getDecryptedCookie("role");
-    if (roleFromCookie) {
-      setUserRole(roleFromCookie);
-    } else {
-      
-      const token = localStorage.getItem("accessToken");
-      if (token) {
-        try {
-          const decoded: { role: string } = jwtDecode(token);
-          setUserRole(decoded.role);
-        } catch (error) {
-          console.error("Failed to decode token:", error);
-        }
-      }
-    }
-  }, []);
-
-  const isAdmin = userRole.toLowerCase() === "admin";
+  const username = user?.username || "User";
+  const isAdmin = role?.toLowerCase() === "admin";
 
   return (
-    <div className="min-h-screen shadow-lg flex items-center justify-center p-6">
+    <div className="min-h-screen flex items-center justify-center p-6">
       <div className="bg-white shadow-lg rounded-2xl p-10 max-w-md w-full text-center border-2 transform transition duration-300 hover:scale-105 hover:shadow-xl">
         <h1 className="text-4xl font-extrabold text-gray-800">
           Welcome, <span className="text-blue-600">{username}</span>!
@@ -43,13 +23,22 @@ const Dashboard: React.FC = () => {
           You are logged in as an {isAdmin ? "Admin" : "User"}.
         </p>
 
-        <div className="mt-8">
+        <div className="mt-8 flex flex-col gap-3">
           <Link
             to="/todos"
             className="bg-red-400 p-3 rounded-lg text-white font-semibold inline-block"
           >
             Explore Todos
           </Link>
+
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className="bg-green-600 p-3 rounded-lg text-white font-semibold inline-block"
+            >
+              Admin Panel
+            </Link>
+          )}
         </div>
       </div>
     </div>
